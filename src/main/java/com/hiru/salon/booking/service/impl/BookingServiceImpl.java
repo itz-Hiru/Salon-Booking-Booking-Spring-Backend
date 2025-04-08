@@ -52,9 +52,6 @@ public class BookingServiceImpl implements BookingService {
         newBooking.setEndTime(bookingEndTime);
         newBooking.setTotalPrice(totalPrice);
 
-        if (!isSlotAvailable) {
-            throw new Exception("Time slow not available");
-        }
         return bookingRepository.save(newBooking);
     }
 
@@ -64,29 +61,27 @@ public class BookingServiceImpl implements BookingService {
         LocalDateTime salonOpenTime = salonDTO.getOpenTime().atDate(bookingStartTime.toLocalDate());
         LocalDateTime salonCloseTime = salonDTO.getCloseTime().atDate(bookingEndTime.toLocalDate());
 
-        List<Booking> existingBookings = getBookingsBySalon(salonDTO.getId());
-
-        if (bookingStartTime.isBefore(salonOpenTime) || bookingEndTime.isBefore(salonCloseTime)) {
+        if (bookingStartTime.isBefore(salonOpenTime) || bookingEndTime.isAfter(salonCloseTime)) {
             throw new Exception("Booking time must be within working hours");
         }
 
+        List<Booking> existingBookings = getBookingsBySalon(salonDTO.getId());
+
         for (Booking existingBooking : existingBookings) {
-            LocalDateTime existingBookingStartTime = existingBooking.getStartTime();
-            LocalDateTime existingBookingEndTime = existingBooking.getEndTime();
+            LocalDateTime existingStart = existingBooking.getStartTime();
+            LocalDateTime existingEnd = existingBooking.getEndTime();
 
-            if (bookingStartTime.isBefore(existingBookingStartTime) && bookingEndTime.isAfter(existingBookingEndTime)) {
-                throw new Exception("This slot is not available. Choose a different slot.");
-            }
-
-            if (bookingStartTime.isEqual(existingBookingStartTime) || bookingEndTime.isEqual(existingBookingEndTime)) {
-                throw new Exception("This slot is not available. Choose a different slot.");
+            boolean overlaps = bookingStartTime.isBefore(existingEnd) && bookingEndTime.isAfter(existingStart);
+            if (overlaps) {
+                throw new Exception("This slot is not available. Choose a different time.");
             }
         }
+
         return true;
     }
 
     @Override
-    public List<Booking> getBookings(Long customerId) {
+    public List<Booking> getBookingsByCustomer(Long customerId) {
         return bookingRepository.findByCustomerId(customerId);
     }
 

@@ -18,7 +18,7 @@ public interface BookingService {
                           SalonDTO salonDTO,
                           Set<ServiceDTO> serviceDTOSet) throws Exception;
 
-    List<Booking> getBookings(Long customerId);
+    List<Booking> getBookingsByCustomer(Long customerId);
 
     List<Booking> getBookingsBySalon(Long salonId);
 
